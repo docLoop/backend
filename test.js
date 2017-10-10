@@ -1,52 +1,35 @@
-var createApp = require('github-app');
+var express = require('express')
+var parseurl = require('parseurl')
+var session = require('express-session')
 
+var app = express()
 
+app.use(session({
+  secret: 'keyboard cat',
+  resave: false,
+  saveUninitialized: true
+}))
 
-var app = createApp({
-  id: process.env.APP_ID,
-  cert: require('fs').readFileSync('docloop.2017-09-13.private-key.pem')
-});
+app.use(function (req, res, next) {
+  if (!req.session.views) {
+    req.session.views = {}
+  }
 
+  // get the url pathname
+  var pathname = parseurl(req).pathname
 
+  // count the views
+  req.session.views[pathname] = (req.session.views[pathname] || 0) + 1
 
-
-
-var createHandler = require('github-webhook-handler');
-
-var handler = createHandler({
-  path: '/',
-  secret: process.env.DOCLOOP_APP_TOKEN
+  next()
 })
 
-handler.on('issues', function (event) {
-  if (event.payload.action === 'opened') {
-    var installation = event.payload.installation.id;
+app.get('/foo', function (req, res, next) {
+  res.send('you viewed this page ' + req.session.views['/foo'] + ' times')
+})
 
-    app.asInstallation(installation).then(function (github) {
-      github.issues.createComment({
-        owner: event.payload.repository.owner.login,
-        repo: event.payload.repository.name,
-        number: event.payload.issue.number,
-        body: 'Welcome to the robot uprising.'
-      });
-    });
-  }
-});
+app.get('/bar', function (req, res, next) {
+  res.send('you viewed this page ' + req.session.views['/bar'] + ' times')
+})
 
-
-
-
-
-var http = require('http');
-
-
-
-http.createServer(function (req, res) {
-  handler(req, res, function (err) {
-    res.statusCode = 404
-    res.end('no such location')
-  });
-}).listen(7777)
-
-
-
+app.listen(7777)
