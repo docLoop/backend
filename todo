@@ -1,0 +1,33 @@
+Done:
+* GithubRepo angelegt
+* Twitter Account aktiviert
+* Cadacy Account angelegt
+* Testing recherchiert
+
+* GithubApp registered
+
+
+
+
+* github dev beigtreten
+* gthub authentication
+* core abstrahiert
+
+
+TODO:
+* check mongoDB security
+* SSL
+* Session data besser kapseln
+* links mit Id speichern und für id mitloggend (der zählen oder was auch immer)
+* AnnotationCalls anglegen
+* AdapterClass anlegen (-> Session data!)
+* Auf installation events hören
+* Prevent duplicate links
+* log errors for links
+* clearup bad links
+* Datenbank/Links verschlüsseln?
+* webhook secrets hashen und salzen(? eher nicht) ! (kollision vermeiden)
+* Code aufräumen //Methoden für externe aufagben, interne Aufgaben, vermittler...
+* Github: Versuchen Issue anzulgen; wenn es das schon gibt, Inhlat erneuern, aufräumen
+* Login bauen für zusatzfunktionen (e.g. mail benachrichtigung)
+* Provisorisches Frontend bauen, dann abstraheiren und refactorn
