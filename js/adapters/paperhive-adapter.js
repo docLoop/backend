@@ -1,3 +1,5 @@
+'use strict';
+
 var		docLoopAdapter 	= 	require('../adapter.js'),
 		config			=	require('../../config.js').paperhive,
 		request			=	require('request-promise-native').defaults({json:true})
@@ -10,12 +12,15 @@ class PaperHiveAdapter extends docLoopAdapter {
 
 		this.id 	= 'paperhive'
 		this.config = config
-		core.ready
-		.then( () => {
-			//this.
-			setTimeout(this.lookForNewAnnotations.bind(this), 1000)			
-		})
 
+		this.core.ready
+		.then( () => setInterval(this.lookForNewAnnotations.bind(this), 6*60*60*1000) )
+
+
+		this.core.on('new-link', link => {
+			console.log('NEW LINK', link)
+			if(link.source.adapter == this.id) this.lookForNewAnnotations()
+		})
 
 		//TODO: Scrape Route
 		//TODO: Interval ceck
@@ -38,11 +43,19 @@ class PaperHiveAdapter extends docLoopAdapter {
 				)
 	}
 
+	getDiscussions(source){
+		return 	request.get('https://paperhive.org/api/documents/'+source.document_id+'/discussions')
+				.then( result => result.discussions)
+	}
+
 	validateSource(source, session_data){
-		if(!source.document_id)			return Promise.reject('PaperHiveAdapter.verifyTarget: missing document_id')
+		if(!source)						return Promise.reject('PaperHiveAdapter.validateSource: missing source')
+		if(!source.document_id)			return Promise.reject('PaperHiveAdapter.validateSource: missing document_id')
 
-
-		return this.saveSource(source)
+		return 	this.getDiscussions(source)
+				.then( () 		=> this.saveSource(source) )
+				.catch( reason 	=> Promise.reject('PaperHiveAdapter.validateSource: unable to read discussions'))
+					
 	}
 
 
@@ -92,10 +105,9 @@ class PaperHiveAdapter extends docLoopAdapter {
 		this.sources.find({}).toArray()
 		.then( sources => {
 			return	Promise.all(sources.map( source => {
-						return 	request.get('https://paperhive.org/api/documents/'+source.document_id+'/discussions')
-								.then( result => result.discussions)
-								.then( discussions => Promise.all(discussions.map(discussion => this.handleDiscussion(source, discussion))) )
-								.then(console.log, console.log)
+						return 	Promise.resolve()
+								.then( () 			=> this.getDiscussions(source) )
+								.then( discussions	=> Promise.all(discussions.map(discussion => this.handleDiscussion(source, discussion))) )
 					}))
 		})
 	}

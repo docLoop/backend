@@ -9,7 +9,7 @@ class WebhookAdapter extends docLoopAdapter {
 
 		this.id 	= 'webhook'
 
-		core.server.post('/webhook', this.handlePost.bind(this))
+		this.app('/', this.handlePost.bind(this))
 
 
 	}

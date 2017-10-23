@@ -1,22 +1,28 @@
-const 	config			=	require('../../config.js').github,
-		GitHubApi		=	require('github'),
+'use strict';
+
+const 	GitHubApi		=	require('github'),
 		createApp 		= 	require('github-app'),
 		request			=	require('request-promise-native'),
 		docLoopAdapter	=	require('../adapter.js')
 
+Promise.hash = Promise.hash || require('./utils.js').promiseHash
+
 class GitHubAdapter extends docLoopAdapter{
 
-	constructor(core) {
+	constructor(core, config) {
 
-		super(core, 'github')
+		super(core, 'github'+ (config.name ? '-'+config.name : ''))
 
-		this.config	= 	config
-		this.app 	= 	createApp({
-							id:   config.appId,
-							cert: require('fs').readFileSync(config.appPrivateKeyLocation)
-						})
+		this.config		= 	config
+		this.githubApp 	= 	createApp({
+								id:   config.appId,
+								cert: require('fs').readFileSync(config.appPrivateKeyLocation)
+							})
 
-		this.core.server.get(this.config.oAuth.callbackRoute, this.handleOAuthCallback.bind(this))
+
+		//TODO: Kapseln? SUB APP!
+
+		this.app.get('/oauth/callback', this.handleOAuthCallback.bind(this))
 
 		this.annotationChain = Promise.resolve()
 
@@ -29,12 +35,28 @@ class GitHubAdapter extends docLoopAdapter{
 		//
 		//Chain schöner machen. Pro target eine eigene chain? Retries hier oder besser im Core? Besser im Core
 
+		//TODO: routen kapseln
+		//Api-calls mit demselben token stacken
+		
+		//listen to Webhook for changes regarding installation and update session data if needed
+
+
+		//maybe dont cache api call at all, they shouldn't happen too often anyway...
+		
+		//throw user token away, if need be
+	
+		//TODO Do not save tragets and sources at validation!	
+		//
+		//TODO: Target-storage per githubid
+		
+
+		//TODO: separate meta data form target/sources
 	}
 
 
 	handleOAuthCallback(req, res, next){
 
-		var session_data	=	this.clearSessionData(req.session),
+		var session_data	=	this._clearSessionData(req.session),
 			params 			= 	{
 									client_id: 		this.config.oAuth.clientId,
 									client_secret: 	this.config.oAuth.clientSecret,
@@ -44,7 +66,7 @@ class GitHubAdapter extends docLoopAdapter{
 
 
 		request({
-			uri: 	config.oAuth.accessTokenUrl+'?', 
+			uri: 	this.config.oAuth.accessTokenUrl+'?', 
 			method: 'post', 
 			json: 	params
 		})
@@ -55,16 +77,24 @@ class GitHubAdapter extends docLoopAdapter{
 			
 		})
 		.then( () => { return this.getUser(session_data) })
-		.then( () => { return this.getUserInstallation(session_data) })
+		.then( () => { return this.getUserInstallations(session_data) })
 		.then(
 			//Todo: probably should redirect here
-			() 	=> { res.status(200).send(session_data) },
+			() 	=> { res.sendFile('github_oauth.html' , {root:'public'}) },
 			e	=> { res.status(500).send(e) }
 		)
 		
 		
 	}
 
+	getData(session_data){
+
+		return 	Promise.hash({
+					user: 		this.getUser(session_data)		.catch( () => null),
+					repos:		this.getUserRepos(session_data)	.catch( () => [] ),
+					targets:	this.getTargets(session_data)	.catch( () => [] )
+				})
+	}
 
 
 	asUser(session_data){
@@ -88,8 +118,10 @@ class GitHubAdapter extends docLoopAdapter{
 		if(!session_data)				return Promise.reject("GitHubAdapter.getUser: Missing session data")
 		if(session_data.user)			return Promise.resolve(session_data.user)
 
+
+
 		return	this.asUser(session_data)
-				.then( github => { return github.users.get({}) })
+				.then( github => github.users.get({}) )
 				.then(
 					result => {
 
@@ -99,29 +131,30 @@ class GitHubAdapter extends docLoopAdapter{
 						return session_data.user = result.data
 
 					},
-					reason => { return Promise.reject('GithubAdapter.asUser:' + reason)	}
+					reason => Promise.reject('GithubAdapter.asUser:' + reason)	
 				)
 	}
 
 
-	getUserInstallation(session_data){
+	//TODO: Multiple Pages!
 
-		if(!session_data)				return Promise.reject("GitHubAdapter.getUserInstallation: Missing session data")
+	getUserInstallations(session_data){
+
+		if(!session_data)				return Promise.reject("GitHubAdapter.getUserInstallations: Missing session data")
 		if(session_data.installation)	return Promise.resolve(session_data.installation)
 
 		return	this.asUser(session_data)
-				.then(github => { return github.users.getInstallations({}) })
+				.then(github => github.users.getInstallations({}) )
 				.then(
 					result	=> { 
-						console.log(result.data)
 						if(!result.data || !result.data.installations || !result.data.installations.length)
-							Promise.reject('GithubAdapter.getUserInstallation: unable to get any installations')
+							Promise.reject('GithubAdapter.getUserInstallations: unable to get any installations')
 
-						return 	(session_data.installation = result.data.installations[0])
-								?	Promise.resolve(result.data.installations[0])
-								:	Promise.reject('GithubAdapter.getUserInstallation: unable to get any matching installation')
+						return 	(session_data.installations = result.data.installations)
+								?	Promise.resolve(result.data.installations)
+								:	Promise.reject('GithubAdapter.getUserInstallations: unable to get any matching installation')
 					},
-					reason 	=> { return Promise.reject('GithubAdapter.getUserInstallation: unable to get user Installations: '+ reason)}
+					reason 	=> Promise.reject('GithubAdapter.getUserInstallations: unable to get user Installations: '+ reason) 
 				)
 	}
 
@@ -129,15 +162,40 @@ class GitHubAdapter extends docLoopAdapter{
 		//TODO: Multiple Pages!
 
 		if(!session_data)			return Promise.reject("GitHubAdapter.getUserRepos: Missing session data")
-		if(session_data.repos)		return Promise.resolve(session_data.repos)
+		
+		//Dont cache Repos, settings in gibhub may change during session
+		//if(session_data.repos)		return Promise.resolve(session_data.repos)
 
 		
-		return 	this.getUserInstallation(session_data)
-				.then(installation 	=> { return this.app.asInstallation(installation.id) })
-				.then(github 		=> { return github.apps.getInstallationRepositories({}) })
-				.then(result		=> { return session_data.repos = result.data.repositories})
+
+		return 	this.getUserInstallations(session_data)
+				.then(installations => Promise.all( installations.map( installation =>
+					this.githubApp.asInstallation(installation.id)
+					.then(github 		=> 	github.apps.getInstallationRepositories({}) )
+					.then(result		=> 	result.data.repositories )
+					.then(repositories	=> 	repositories.map(repository => ({
+												name:			repository.name,
+												full_name:		repository.full_name,
+												html_url:		repository.html_url,
+												owner:			repository.owner,
+												target:			this.getTarget(
+																	repository.owner.login,
+																	repository.name,
+																	installation.id
+																)
+											})))
+				)))
+				.then(repository_arrays => Array.prototype.concat.apply([], repository_arrays))
 
 	}
+
+	getTargets(session_data){
+		return 	this.getUserRepos(session_data)
+				.then(repos 	=> repos.map( repo => repo.target) )
+				.then(targets 	=> Promise.all(targets.map( target => this.targets.findOne(target))))
+				.then(targets	=> targets.filter(target => target))
+				.then(targets	=> targets.map(target => target._id))
+	} 	
 
 
 	preventDuplicateTarget(){
@@ -161,54 +219,41 @@ class GitHubAdapter extends docLoopAdapter{
 				
 	}
 
-	url2Target(url) {
-
-		this.this.getUserInstallation(session_data)
-		.then( installation => {
-			
-			//https://github.com/rhotep/docLoop
-			var matches = url.match(/github.com\/([^/]+)\/([^/]+)/)
-
-			return	{
-						adapter:		this.id,
-						owner:			matches[1]
-						repo:			matches[2],
-					}
-		))
+	getTarget(owner, repo_name, installation_id){
+		return 	{
+					adapter: 			this.id,
+					repo:				repo_name,
+					installation_id:	installation_id,
+					owner:				owner
+				}
 	}
 
-	validateTarget(target, session){
 
-		var session_data = this.getSessionData(session)
+	validateTarget(target, session_data){
 
-		if(target.adapter != this.id)								return Promise.reject("GithubAdapter.validateTarget: Adapter mismatch")
-		if(!target.repo)											return Promise.reject("GithubAdapter.validateTarget: Missing repo_id")
-		if(!target.installation_id)									return Promise.reject("GithubAdapter.validateTarget: Missing installation_id")
-		if(!target.owner)											return Promise.reject("GithubAdapter.validateTarget: Missing owner")
-		if(!session_data)											return Promise.reject("GithubAdapter.validateTarget: Missing session data")
-		if(!session_data.access_token)								return Promise.reject('GithubAdapter.validateTarget: Not logged in with github')
+		if(!target)							return Promise.reject("GithubAdapter.validateTarget: Missing target")
+		if(target.adapter != this.id)		return Promise.reject("GithubAdapter.validateTarget: Adapter mismatch")
+		if(!target.repo)					return Promise.reject("GithubAdapter.validateTarget: Missing repo_id")
+		if(!target.installation_id)			return Promise.reject("GithubAdapter.validateTarget: Missing installation_id")
+		if(!target.owner)					return Promise.reject("GithubAdapter.validateTarget: Missing owner")
+		if(!session_data)					return Promise.reject("GithubAdapter.validateTarget: Missing session data")
+		if(!session_data.access_token)		return Promise.reject('GithubAdapter.validateTarget: Not logged in with github')
 		
 
 		return	Promise.resolve()
-				.then( () 	=> { return this.getUser(session_data) })
-				.then( user => {
-					if(target.owner != user.login) 		 			
-						return Promise.reject("GithubAdapter.validateTarget: User mismatch")
-
-				})
-				.then( () => { return this.getUserInstallation(session_data) })
-				.then( installation => {
-
-					if(target.installation_id != installation.id) 	
-						return Promise.reject("GithubAdapter.validateTarget: Installation mismatch")
-
-				})
-				.then( () => { return this.getUserRepos(session_data) })
-				.then( repos => {
-					if( repos.every( repo => { return repo.name != target.repo }) )
-						return Promise.reject("GithubAdapter.validateTarget: Repo inaccessible")
-				})
-				.then( () => this.saveTarget(target))
+				// .then( () 				=> this.getUser(session_data) )
+				// .then( user 			=> target.owner == user.login || Promise.reject("GithubAdapter.validateTarget: User mismatch") )
+				// .then( () 				=> this.getUserInstallations(session_data) )
+				// .then( installations 	=> installlations.some( installation => installation.id == target.installations_id) )
+				// .then( inst_match		=> inst_match || Promise.reject("GithubAdapter.validateTarget: Installation mismatch") )
+				.then( () 				=> this.getUserRepos(session_data) )
+				.then( repos 			=> repos.some( repo => 
+													repo.target.owner 			== target.owner 
+												&& 	repo.target.installation_id	== target.installation_id
+												&&	repo.target.repo			== target.repo) 
+											)
+				.then( repo_match		=> repo_match || Promise.reject("GithubAdapter.validateTarget: Repo inaccessible") )
+				.then( () 				=> this.saveTarget(target))
 	}
 
 
@@ -377,7 +422,7 @@ class GitHubAdapter extends docLoopAdapter{
 
 		return	this.targets.findOne({_id: target_id})
 				.then( target =>{
-					return	this.app.asInstallation(target.installation_id)
+					return	this.githubApp.asInstallation(target.installation_id)
 							.then(github => 
 								issue_number
 								?	github.issues.edit({	
@@ -419,7 +464,7 @@ class GitHubAdapter extends docLoopAdapter{
 
 		return	this.targets.findOne({_id: target_id})
 				.then( target =>{
-					return	this.app.asInstallation(target.installation_id)
+					return	this.githubApp.asInstallation(target.installation_id)
 							.then(github => 
 								comment_id
 								?	github.issues.editComment({	

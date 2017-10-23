@@ -1,13 +1,13 @@
 "use strict";
 
-var docLoopCore 			= require('./docloop-core.js'),
-	WebhookAdapter			= require('./adapters/webhook-adapter.js'),
-	GitHubAdapter			= require('./adapters/github-adapter.js'),
-	PaperHiveAdapter		= require('./adapters/paperhive-adapter.js')
+var docLoopCore 		= require('./docloop-core.js'),
+	GitHubAdapter		= require('./adapters/github-adapter.js'),
+	PaperHiveAdapter	= require('./adapters/paperhive-adapter.js'),
+	config				= require('../config.js')
+		
 
 docLoopCore
-.use(WebhookAdapter)
-.use(GitHubAdapter)
-.use(PaperHiveAdapter)
+.use(GitHubAdapter, 	config.github)
+.use(PaperHiveAdapter, 	config.paperhive)
 
 docLoopCore.run()
