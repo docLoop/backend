@@ -40,11 +40,20 @@ class docLoopCore extends EventEmitter {
 			saveUninitialized: 	true,
 			cookie: 			{ 
 									path: 		'/', 
+									domain:		config.cookieDomain,
 									httpOnly: 	true,  //TODO!
 									secure: 	'auto', 
 									maxAge: 	null
 								}
 		}))
+
+		this.app.use(function(req, res, next) {
+			res.header('Access-Control-Allow-Credentials', 	true)
+			res.header('Access-Control-Allow-Origin', 		req.headers.origin)
+			res.header('Access-Control-Allow-Methods', 		'GET,PUT,POST,DELETE')
+			res.header('Access-Control-Allow-Headers', 		'X-Requested-With, X-HTTP-Method-Override, Content-Type, Accept')
+			next();
+		});
 
 
 		this.app.use(bodyParser.json())
@@ -140,19 +149,25 @@ class docLoopCore extends EventEmitter {
 			targets:	Promise.all(Object.keys(this.adapters).map(adapter_id => this.adapters[adapter_id]._getTargets(req.session)))
 						.then(target_arrays => Array.prototype.concat.apply([], target_arrays))
 		})
-		.then( result	=> console.log(result.targets) || result)
-		.then( result 	=> this.links.find({
+		.then( result	=> 	console.log(result.targets) || result)
+
+		.then( result 	=> 	this.links.find({
 								$or: [ 
-									{'source.id': {$in: result.sources} } , 
+									{'source.id': {$in: result.sources} }, 
 									{'target.id' :{$in: result.targets} }
 								] 
 							}).toArray())
+
 		.then( links	=> 	Promise.all(links.map(link => Promise.hash({
 								_id:	link._id,
 								source:	this.adapters[link.source.adapter].sources.findOne({_id: link.source.id}),
 								target:	this.adapters[link.target.adapter].targets.findOne({_id: link.target.id})
 							}))))
-		.then( links 	=> 	res.send(links))
+
+		.then( 
+			links 	=> 	res.status(200).send(links),
+			reason	=>	res.status(500).send(reason)
+		)
 
 	
 	}
