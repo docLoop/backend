@@ -27,6 +27,8 @@ class GitHubAdapter extends docLoopAdapter{
 		this.annotationChain = Promise.resolve()
 
 
+		//TODO catch logout event!
+
 		/* PLAN: Immer wenn User graucht wird auf login umleiten und aufgabe stacken, dann wenn der code und schließlich der token da ist, stack abarbeiten */
 	
 		//TODO: RETRY failed events!
@@ -90,9 +92,10 @@ class GitHubAdapter extends docLoopAdapter{
 	getData(session_data){
 
 		return 	Promise.hash({
-					user: 		this.getUser(session_data)		.catch( () => null),
-					repos:		this.getUserRepos(session_data)	.catch( () => [] ),
-					targets:	this.getTargets(session_data)	.catch( () => [] )
+					user: 			this.getUser(session_data)				.catch( () => null),
+					installations:	this.getUserInstallations(session_data)	.catch( (r) => console.log(r)||[] ),
+					repos:			this.getUserRepos(session_data)			.catch( () => [] ),
+					targets:		this.getTargets(session_data)			.catch( () => [] )
 				})
 	}
 
