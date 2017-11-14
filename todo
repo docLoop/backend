@@ -32,3 +32,8 @@ TODO:
 * Login bauen für zusatzfunktionen (e.g. mail benachrichtigung)
 * Provisorisches Frontend bauen, dann abstraheiren und refactorn
 * Repost für Organizations testen 
+
+
+Today:
+* make things work with chainify and syncify
+* write tests for chainify and syncify

@@ -1,13 +1,17 @@
-"use strict";
+"use strict"
 
-var docLoopCore 		= require('./docloop-core.js'),
-	GitHubAdapter		= require('./adapters/github-adapter.js'),
-	PaperHiveAdapter	= require('./adapters/paperhive-adapter.js'),
-	config				= require('../config.js')
-		
+const 	DocLoopCore 		= require('./docloop-core.js'),
+		GitHubAdapter		= require('./adapters/github-adapter.js'),
+		PaperHiveAdapter	= require('./adapters/paperhive-adapter.js'),
+		config				= require('../config.js'),
+		core				= new DocLoopCore(config)
 
-docLoopCore
+
+
+core
 .use(GitHubAdapter, 	config.github)
-.use(PaperHiveAdapter, 	config.paperhive)
+//.use(PaperHiveAdapter, 	config.paperhive)
 
-docLoopCore.run()
+
+docLoopCore.emit('new-annotation')
+

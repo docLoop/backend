@@ -1,4 +1,6 @@
-var		docLoopAdapter 	= 	require('../adapter.js')
+'use strict'
+
+var	docLoopAdapter 	= 	require('../adapter.js')
 
 class WebhookAdapter extends docLoopAdapter {
 
@@ -22,7 +24,7 @@ class WebhookAdapter extends docLoopAdapter {
 	}
 
 
-	validateSource(source, session_data){
+	validateSource(source){
 		if(source.adapter != this.id) 	return Promise.reject('WebhookAdapter.verifyTarget: Adapter mismatch')
 		if(!source.secret)				return Promise.reject('WebhookAdapter.verifyTarget: Secret missing')
 
@@ -39,7 +41,7 @@ class WebhookAdapter extends docLoopAdapter {
 	}
 
 
-	handlePost(req, res, next){
+	handlePost(req, res){
 		var data	= 	req.body
 
 		if(!data.secret) 		return res.status(400).send({error: 'missing secret'})

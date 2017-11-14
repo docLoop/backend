@@ -8,9 +8,10 @@
   },
   "scripts": {
     "prestart": "mongod --dbpath=data --port 27017 --fork --logpath /dev/null",
-    "start": "node js/index.js",
-    "stop": "mongod --dbpath data --shutdown",
-    "test": "mocha"
+    "start": "forever start js/index.js",
+    "stop": "forever stop js/index.js; mongod --dbpath data --shutdown",
+    "test": "mkdir testdb; mongod --dbpath=testdb --port 27777 --fork --logpath /dev/null && mocha",
+    "posttest": "mongod --dbpath=testdb --port 27777 --shutdown"
   },
   "repository": {
     "type": "git",
@@ -18,25 +19,32 @@
   },
   "keywords": [],
   "author": "Andreas Pittrich",
-  "license": "GPL3",
+  "license": "GPL-3.0",
   "bugs": {
     "url": "https://github.com/rhotep/docLoop/issues"
   },
   "homepage": "https://github.com/rhotep/docLoop#readme",
   "dependencies": {
+    "bluebird": "^3.5.1",
+    "chai": "^4.1.2",
+    "chai-as-promised": "^7.1.1",
     "connect-mongo": "^1.3.2",
     "express": "^4.16.2",
     "express-promise": "^0.4.0",
     "express-session": "^1.15.5",
+    "forever": "^0.15.3",
     "github": "^11.0.0",
     "github-app": "^3.2.0",
     "github-webhook-handler": "^0.6.0",
     "mongodb": "^2.2.31",
     "request": "^2.82.0",
-    "request-promise-native": "^1.0.4"
+    "request-promise-native": "^1.0.4",
+    "sinon-chai": "^2.14.0"
   },
   "devDependencies": {
+    "eslint": "^4.11.0",
     "mocha": "^3.5.3",
+    "proxyquire": "^1.8.0",
     "sinon": "^3.2.1"
   }
 }

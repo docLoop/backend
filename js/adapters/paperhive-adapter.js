@@ -1,8 +1,10 @@
-'use strict';
+'use strict'
 
 var		docLoopAdapter 	= 	require('../adapter.js'),
 		config			=	require('../../config.js').paperhive,
-		request			=	require('request-promise-native').defaults({json:true})
+		request			=	require('request-promise-native').defaults({json:true}),
+		Promise			=	require('bluebird')
+		
 
 class PaperHiveAdapter extends docLoopAdapter {
 
@@ -18,7 +20,7 @@ class PaperHiveAdapter extends docLoopAdapter {
 
 
 		this.core.on('new-link', link => {
-			console.log('NEW LINK', link)
+			//console.log('NEW LINK', link)
 			if(link.source.adapter == this.id) this.lookForNewAnnotations()
 		})
 
@@ -48,13 +50,13 @@ class PaperHiveAdapter extends docLoopAdapter {
 				.then( result => result.discussions)
 	}
 
-	validateSource(source, session_data){
+	validateSource(source){
 		if(!source)						return Promise.reject('PaperHiveAdapter.validateSource: missing source')
 		if(!source.document_id)			return Promise.reject('PaperHiveAdapter.validateSource: missing document_id')
 
 		return 	this.getDiscussions(source)
 				.then( () 		=> this.saveSource(source) )
-				.catch( reason 	=> Promise.reject('PaperHiveAdapter.validateSource: unable to read discussions'))
+				.catch( reason 	=> Promise.reject('PaperHiveAdapter.validateSource: unable to read discussions ' +reason))
 					
 	}
 
@@ -86,8 +88,8 @@ class PaperHiveAdapter extends docLoopAdapter {
 
 	handleDiscussion(source, discussion){
 		this.emit('annotation', {
-		 	source_id:	source._id,
-		 	annotation:	this.discussion2Annotation(discussion)
+			source_id:	source._id,
+			annotation:	this.discussion2Annotation(discussion)
 		})
 
 		discussion.replies.forEach( reply => {
