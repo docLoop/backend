@@ -155,7 +155,7 @@ class GitHubAdapter extends DocLoopAdapter{
 				.then( data	=> session_data.access_token = data.access_token) 
 				.then(
 					//Todo: probably should redirect here
-					() 	=> { res.redirect(this.core.frontEndUrl)},
+					() 	=> { res.redirect(this.core.config.frontEndUrl)},
 					e	=> { res.status(500).send(e.toString()) }
 				)	
 		
