@@ -33,6 +33,7 @@ TODO:
 * Provisorisches Frontend bauen, dann abstraheiren und refactorn
 * Repost für Organizations testen 
 
+*unhalndled Rejection (eg. github auth)
 
 Today:
 * make things work with chainify and syncify
