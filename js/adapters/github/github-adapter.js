@@ -157,7 +157,7 @@ class GitHubAdapter extends DocLoopAdapter{
 				.then( data	=> session_data.access_token = data.access_token) 
 				.then(
 					//Todo: probably should redirect here
-					() 	=> { console.log('###', this.config.oauth.redirect) || res.redirect(this.config.oauth.redirect)},
+					() 	=> { console.log('###', this.config.oAuth.redirect) || res.redirect(this.config.oAuth.redirect)},
 					e	=> { res.status(500).send(e.toString()) }
 				)	
 		
