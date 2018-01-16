@@ -61,6 +61,8 @@ class GithubTarget extends Endpoint{
 			valid_endpoints	= await this.adapter.getStoredEndpoints(session_data),
 			match			= 		valid_endpoints.some( endpoint => this.match(endpoint) )
 
+		console.log('### ???', session_data, valid_endpoints, match)
+
 		if(!match)	throw new Error('GithubTarget.validate() no valid endpoint match')
 	}
 
