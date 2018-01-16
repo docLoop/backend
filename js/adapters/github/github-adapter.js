@@ -89,6 +89,8 @@ class GitHubAdapter extends DocLoopAdapter{
 
 		//TODO:Add config to targets
 
+		//TODO: default config and config Error
+
 		//TODO: this.eventQueue.on('fail', this.handleNewAnnotationEvent.bind(this))
 
 
@@ -154,8 +156,9 @@ class GitHubAdapter extends DocLoopAdapter{
 				.then( ()	=> request( {method: 'post', uri, json} ) )
 				.then( data	=> session_data.access_token = data.access_token) 
 				.then(
+					console.log('###', this.config.oauth.redirect)
 					//Todo: probably should redirect here
-					() 	=> { res.redirect(this.core.config.frontEndUrl)},
+					() 	=> { res.redirect(this.config.oauth.redirect)},
 					e	=> { res.status(500).send(e.toString()) }
 				)	
 		
@@ -166,13 +169,13 @@ class GitHubAdapter extends DocLoopAdapter{
 		//it's alright if session data is missing
 
 		var user 			= undefined,
-			link			= this.config.authLink,
+			url				= this.config.oAuth.authUrl,
 			access_token 	= session_data && session_data.access_token
 
 		try {		user = await this.githubUser.get(access_token)	} 
 		catch(e) {	console.log(e)	}
 
-		return {user: user && user.login, link}
+		return {user: user && user.login, url}
 	}
 
 	async getUserRepos(session_data){
