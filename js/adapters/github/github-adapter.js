@@ -171,6 +171,8 @@ class GitHubAdapter extends DocLoopAdapter{
 			url				= this.config.oAuth.authUrl,
 			access_token 	= session_data && session_data.access_token
 
+		console.log('####', session_data)
+
 		try {		user = await this.githubUser.get(access_token)	} 
 		catch(e) {	console.log(e)	}
 
