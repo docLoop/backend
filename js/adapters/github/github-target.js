@@ -58,7 +58,7 @@ class GithubTarget extends Endpoint{
 
 	async validate(session){
 		var session_data 	= 		this.adapter._getSessionData(session),
-			valid_endpoints	= await this.adapter.getStoredEndpoints(session_data),
+			valid_endpoints	= await this.adapter.getEndpoints(session_data),
 			match			= 		valid_endpoints.some( endpoint => this.match(endpoint) )
 
 		console.log('### ???', session_data, valid_endpoints, match)
