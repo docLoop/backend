@@ -19,7 +19,7 @@
     "test": "test"
   },
   "scripts": {
-    "prestart": "mongod --dbpath=data --port 27017 --auth --fork --logpath /dev/null",
+    "prestart": "[ ! -d data ] && mkdir -p data; mongod --dbpath=data --port 27017 --auth --fork --logpath /dev/null",
     "start": "forever start index.js",
     "stop": "forever stop index.js; mongod --dbpath data --shutdown",
     "posttest": "mongod --dbpath=testdb --port 27777 --shutdown"
