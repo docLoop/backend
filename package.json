@@ -1,6 +1,6 @@
 {
   "name": "docloop-backend",
-  "version": "1.0.0",
+  "version": "0.9.0",
   "description": "Service to convert annotations on one platform into issue on another.",
   "keywords": [
     "annotation",
@@ -25,15 +25,13 @@
     "posttest": "mongod --dbpath=testdb --port 27777 --shutdown"
   },
   "dependencies": {
-    "docloop": "^1.0.0",
-    "docloop-github-adapter": "file:../adapters/github",
-    "docloop-paperhive-adapter": "file:../adapters/paperhive",
     "forever": "^0.15.3",
     "save": "^2.3.2"
   },
   "devDependencies": {
-    "docloop": "file:../base",
-    "eslint": "^4.11.0",
+    "docloop": "file:../core",
+    "docloop-github-adapter": "file:../github-adapter",
+    "docloop-paperhive-adapter": "file:../paperhive-adapter",
     "mocha": "^3.5.3",
     "proxyquire": "^1.8.0",
     "sinon": "^3.2.1",
