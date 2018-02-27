@@ -1,3 +1,3 @@
-#backend
+# docloopBackend
 
-See [DocloopCore](http://github.com/docloop/core) for now.
+This is the backend for the example [docloop](http://github.com/docloop/core) app.
