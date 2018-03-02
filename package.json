@@ -1,6 +1,6 @@
 {
   "name": "docloop-backend",
-  "version": "0.9.0",
+  "version": "0.9.1",
   "author": "Andreas Pittrich",
   "license": "GPL-3.0",
   "description": "Service to convert annotations on one platform into issue on another.",
