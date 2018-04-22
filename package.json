@@ -27,7 +27,7 @@
   "dependencies": {
     "docloop": "^0.9.0",
     "docloop-github-adapter": "^0.9.0",
-    "docloop-paperhive-adapter": "^0.9.0",
+    "docloop-paperhive-adapter": "^0.10.0",
     "forever": "^0.15.3"
   },
   "devDependencies": {
