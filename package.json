@@ -25,9 +25,9 @@
     "posttest": "mongod --dbpath=testdb --port 27777 --shutdown"
   },
   "dependencies": {
-    "docloop": "^0.10.0",
-    "docloop-github-adapter": "^0.10.1",
-    "docloop-paperhive-adapter": "^0.10.7",
+    "docloop": "^1.0.0",
+    "docloop-github-adapter": "^1.0.0",
+    "docloop-paperhive-adapter": "^1.0.0",
     "forever": "^0.15.3",
     "npm": "^6.4.1"
   },
